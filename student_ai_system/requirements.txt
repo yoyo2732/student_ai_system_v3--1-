@@ -12,3 +12,4 @@ werkzeug==3.0.3
 pyotp==2.9.0
 qrcode[pil]==7.4.2
 shap==0.45.0
+gunicorn
