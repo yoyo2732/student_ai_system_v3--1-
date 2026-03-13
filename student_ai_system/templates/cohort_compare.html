@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Cohort Comparison - Student AI{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="container text-center">
+    <h1 class="page-title"><i class="fa-solid fa-code-compare me-3"></i>Cohort Comparison</h1>
+    <p class="page-subtitle">Compare two student groups side-by-side — Semester A vs B, Class vs Class</p>
+  </div>
+</div>
+<div class="container py-5">
+  <div class="row justify-content-center g-4">
+    <div class="col-lg-8">
+      <div class="glass-card p-4 mb-4">
+        <h5 class="mb-4"><i class="fa-solid fa-upload me-2 text-primary-glow"></i>Upload Two Cohorts</h5>
+        <form method="POST" enctype="multipart/form-data">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-sm">Cohort A Label</label>
+              <input type="text" name="label1" class="form-control glass-input" value="Semester 1" placeholder="e.g. Semester 1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Cohort B Label</label>
+              <input type="text" name="label2" class="form-control glass-input" value="Semester 2" placeholder="e.g. Semester 2">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Cohort A CSV</label>
+              <input type="file" name="file1" class="form-control glass-input" accept=".csv" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-sm">Cohort B CSV</label>
+              <input type="file" name="file2" class="form-control glass-input" accept=".csv" required>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary-glow w-100">
+                <i class="fa-solid fa-magnifying-glass-chart me-2"></i>Compare Cohorts
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if result %}
+  {% set a = result.cohort1 %}
+  {% set b = result.cohort2 %}
+  {% set d = result.deltas %}
+
+  <!-- Delta Headline Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="delta-card glass-card p-4 text-center {{ 'delta-good' if d.high_risk_pct <= 0 else 'delta-bad' }}">
+        <div class="delta-value">{{ '+' if d.high_risk_pct > 0 else '' }}{{ d.high_risk_pct }}%</div>
+        <div class="delta-label">High Risk Change</div>
+        <div class="delta-icon">{{ '📈' if d.high_risk_pct > 0 else '📉' }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="delta-card glass-card p-4 text-center {{ 'delta-good' if d.avg_health > 0 else 'delta-bad' }}">
+        <div class="delta-value">{{ '+' if d.avg_health > 0 else '' }}{{ d.avg_health }}</div>
+        <div class="delta-label">Avg Health Score Change</div>
+        <div class="delta-icon">{{ '💚' if d.avg_health > 0 else '❤️' }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="delta-card glass-card p-4 text-center {{ 'delta-good' if d.good_perf_pct >= 0 else 'delta-bad' }}">
+        <div class="delta-value">{{ '+' if d.good_perf_pct > 0 else '' }}{{ d.good_perf_pct }}%</div>
+        <div class="delta-label">Good Performance Change</div>
+        <div class="delta-icon">{{ '🏆' if d.good_perf_pct > 0 else '⚠️' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side-by-Side Charts -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="glass-card p-4">
+        <h6 class="chart-title">{{ result.label1 }} — Dropout Distribution</h6>
+        <canvas id="chartA" height="220"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="glass-card p-4">
+        <h6 class="chart-title">{{ result.label2 }} — Dropout Distribution</h6>
+        <canvas id="chartB" height="220"></canvas>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="glass-card p-4">
+        <h6 class="chart-title">Side-by-Side Performance Comparison</h6>
+        <canvas id="chartCompare" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <div class="glass-card p-4">
+    <h5 class="mb-3">Summary Statistics</h5>
+    <div class="table-responsive">
+      <table class="table table-results">
+        <thead><tr><th>Metric</th><th>{{ result.label1 }}</th><th>{{ result.label2 }}</th><th>Delta</th></tr></thead>
+        <tbody>
+          <tr><td>Total Students</td><td>{{ a.total }}</td><td>{{ b.total }}</td><td>—</td></tr>
+          <tr><td>High Dropout Risk</td><td>{{ a.dropout_dist.get('High',0) }}</td><td>{{ b.dropout_dist.get('High',0) }}</td>
+            <td class="{{ 'text-success' if (b.dropout_dist.get('High',0) - a.dropout_dist.get('High',0)) <= 0 else 'text-danger' }}">
+              {{ b.dropout_dist.get('High',0) - a.dropout_dist.get('High',0) }}
+            </td></tr>
+          <tr><td>Good Performance</td><td>{{ a.perf_dist.get('Good',0) }}</td><td>{{ b.perf_dist.get('Good',0) }}</td>
+            <td class="{{ 'text-success' if (b.perf_dist.get('Good',0) - a.perf_dist.get('Good',0)) >= 0 else 'text-danger' }}">
+              {{ b.perf_dist.get('Good',0) - a.perf_dist.get('Good',0) }}
+            </td></tr>
+          <tr><td>Avg Health Score</td><td>{{ a.avg_health }}</td><td>{{ b.avg_health }}</td>
+            <td class="{{ 'text-success' if b.avg_health >= a.avg_health else 'text-danger' }}">
+              {{ '+' if b.avg_health > a.avg_health else '' }}{{ (b.avg_health - a.avg_health)|round(1) }}
+            </td></tr>
+          <tr><td>Anomalies Detected</td><td>{{ a.anomaly_count }}</td><td>{{ b.anomaly_count }}</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% if result %}
+<script>
+const a = {{ result.cohort1 | tojson }};
+const b = {{ result.cohort2 | tojson }};
+const colors3 = ['#e74c3c','#f39c12','#27ae60'];
+new Chart(document.getElementById('chartA'), {
+  type:'doughnut', data:{labels:Object.keys(a.dropout_dist||{}), datasets:[{data:Object.values(a.dropout_dist||{}), backgroundColor:colors3, borderWidth:0}]},
+  options:{plugins:{legend:{labels:{color:'#a8b2c1'}}}}
+});
+new Chart(document.getElementById('chartB'), {
+  type:'doughnut', data:{labels:Object.keys(b.dropout_dist||{}), datasets:[{data:Object.values(b.dropout_dist||{}), backgroundColor:colors3, borderWidth:0}]},
+  options:{plugins:{legend:{labels:{color:'#a8b2c1'}}}}
+});
+new Chart(document.getElementById('chartCompare'), {
+  type:'bar',
+  data:{
+    labels:['Good Performance','Average Performance','Low Performance','High Dropout Risk'],
+    datasets:[
+      {label:'{{ result.label1 }}', data:[a.perf_dist?.Good||0, a.perf_dist?.Average||0, a.perf_dist?.Low||0, a.high_risk_count||0], backgroundColor:'rgba(108,92,231,0.7)', borderRadius:6},
+      {label:'{{ result.label2 }}', data:[b.perf_dist?.Good||0, b.perf_dist?.Average||0, b.perf_dist?.Low||0, b.high_risk_count||0], backgroundColor:'rgba(0,168,255,0.7)', borderRadius:6}
+    ]
+  },
+  options:{plugins:{legend:{labels:{color:'#a8b2c1'}}}, scales:{x:{ticks:{color:'#a8b2c1'}}, y:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.05)'}}}}
+});
+</script>
+{% endif %}
+{% endblock %}

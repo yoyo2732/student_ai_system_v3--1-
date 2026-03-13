@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Student Login — MIT College{% endblock %}
+{% block content %}
+<div class="login-page">
+  <div class="login-bg-animation">
+    <div class="orb orb-1" style="background:radial-gradient(circle,#e74c3c,transparent)"></div>
+    <div class="orb orb-2"></div>
+  </div>
+  <div class="login-container" style="max-width:480px">
+    <div class="login-card glass-card">
+
+      <!-- MIT Header inside card -->
+      <div class="text-center mb-4">
+        <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+          <img src="{{ url_for('static', filename='mit_logo.png') }}" alt="MIT Logo"
+               style="width:64px;height:64px;object-fit:contain;background:white;border-radius:50%;padding:6px;box-shadow:0 0 0 3px rgba(231,76,60,0.3)">
+          <div class="text-start">
+            <div style="font-size:0.85rem;font-weight:800;color:#e74c3c;line-height:1.2">MIT College of Railway Engineering</div>
+            <div style="font-size:0.7rem;color:var(--t2)">Barshi, Solapur · Est. 1983</div>
+          </div>
+        </div>
+        <div class="login-logo" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">
+          <i class="fa-solid fa-user-graduate"></i>
+        </div>
+        <h2 class="login-title mt-2">Student Portal</h2>
+        <p class="text-muted-soft small">Access your study planner and submit feedback</p>
+      </div>
+
+      {% if error %}
+      <div class="alert alert-danger glass-alert mb-3">
+        <i class="fa-solid fa-circle-xmark me-2"></i>{{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label-sm">Student ID</label>
+          <div class="input-group glass-input-group">
+            <span class="input-group-text"><i class="fa-solid fa-id-card"></i></span>
+            <input type="text" name="student_id" class="form-control glass-input"
+                   placeholder="e.g. S001" required autofocus
+                   value="{{ request.form.get('student_id','') }}"
+                   style="text-transform:uppercase">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label-sm">Password</label>
+          <div class="input-group glass-input-group">
+            <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" name="password" id="stuPw" class="form-control glass-input" placeholder="Enter password" required>
+            <button type="button" class="btn glass-input border-0 px-3"
+                    onclick="const f=document.getElementById('stuPw');f.type=f.type==='password'?'text':'password'">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn w-100 mb-3 fw-bold py-2"
+                style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;border:none;border-radius:10px;font-size:1rem">
+          <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In to Student Portal
+        </button>
+      </form>
+
+      <!-- Demo credentials hint -->
+      <div class="glass-card p-3 mb-3" style="border-color:rgba(231,76,60,0.2);background:rgba(231,76,60,0.05)">
+        <p class="tiny text-muted-soft mb-2 fw-semibold">Demo student accounts:</p>
+        <div class="d-flex flex-wrap gap-1">
+          {% for sid, pw in [('S001','alice123'),('S002','bob123'),('S003','carol123'),('S005','emma123')] %}
+          <span class="tiny badge" style="background:rgba(231,76,60,0.15);color:#e74c3c;cursor:pointer;padding:.3rem .6rem;border-radius:6px"
+                onclick="document.querySelector('[name=student_id]').value='{{ sid }}';document.getElementById('stuPw').value='{{ pw }}'">
+            {{ sid }} / {{ pw }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="text-center">
+        <a href="{{ url_for('index') }}" class="btn btn-ghost-sm me-2">
+          <i class="fa-solid fa-arrow-left me-1"></i>Home
+        </a>
+        <a href="{{ url_for('admin_login') }}" class="btn btn-ghost-sm">
+          <i class="fa-solid fa-shield me-1"></i>Admin Login
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

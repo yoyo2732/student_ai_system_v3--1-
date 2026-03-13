@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Upload Dataset - Student AI{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="container text-center">
+    <h1 class="page-title"><i class="fa-solid fa-upload me-3"></i>Upload Dataset</h1>
+    <p class="page-subtitle">Upload your CSV student dataset for batch AI predictions</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center g-4">
+    <!-- Upload Card -->
+    <div class="col-lg-7">
+      <div class="glass-card p-5">
+        <h3 class="mb-4"><i class="fa-solid fa-file-csv me-2 text-primary-glow"></i>CSV File Upload</h3>
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" name="file" id="fileInput" accept=".csv" class="d-none">
+            <div class="upload-icon">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <h4>Drag & Drop CSV File</h4>
+            <p class="text-muted-soft">or click to browse files</p>
+            <button type="button" class="btn btn-glass mt-3" onclick="document.getElementById('fileInput').click()">
+              <i class="fa-solid fa-folder-open me-2"></i>Browse Files
+            </button>
+            <div id="fileSelected" class="file-selected-info mt-3" style="display:none">
+              <i class="fa-solid fa-file-csv text-success"></i>
+              <span id="fileName" class="ms-2 fw-semibold"></span>
+              <span id="fileSize" class="text-muted-soft ms-2 small"></span>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary-glow btn-lg w-100" id="submitBtn" disabled>
+              <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Run AI Predictions
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Format Guide -->
+    <div class="col-lg-5">
+      <div class="glass-card p-4 mb-4">
+        <h5 class="mb-3"><i class="fa-solid fa-table me-2 text-primary-glow"></i>Required CSV Columns</h5>
+        <div class="column-list">
+          {% set cols = [
+            ('Student_ID', 'Unique identifier', 'blue'),
+            ('Student_Name', 'Full name', 'blue'),
+            ('Attendance', '0–100 percent', 'green'),
+            ('Study_Hours', 'Hours per day', 'green'),
+            ('Previous_Grades', '0–100', 'green'),
+            ('Assignment_Score', '0–100', 'green'),
+            ('Family_Support', '0 or 1', 'orange'),
+            ('Internet_Access', '0 or 1', 'orange'),
+            ('Financial_Issues', '0 or 1', 'orange'),
+            ('Subject_Math', '0–100', 'purple'),
+            ('Subject_Science', '0–100', 'purple'),
+            ('Subject_English', '0–100', 'purple'),
+            ('Subject_Programming', '0–100', 'purple'),
+            ('Subject_History', '0–100', 'purple'),
+            ('Extra_Curricular', '0 or 1', 'teal'),
+            ('Health_Issues', '0 or 1', 'teal'),
+          ] %}
+          {% for col, desc, color in cols %}
+          <div class="column-item">
+            <span class="col-badge col-badge-{{ color }}">{{ col }}</span>
+            <span class="col-desc text-muted-soft small">{{ desc }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="glass-card p-4">
+        <h5 class="mb-3"><i class="fa-solid fa-download me-2 text-success"></i>Sample Dataset</h5>
+        <p class="text-muted-soft small mb-3">Download the sample CSV to understand the expected format.</p>
+        <a href="{{ url_for('static', filename='sample_dataset.csv') }}" class="btn btn-glass w-100" download>
+          <i class="fa-solid fa-file-csv me-2"></i>Download Sample CSV
+        </a>
+        <hr class="my-3">
+        <div class="model-status">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted-soft small">Model Status</span>
+            <span class="badge bg-success">
+              <i class="fa-solid fa-circle-check me-1"></i>Ready
+            </span>
+          </div>
+          <div class="progress mt-2" style="height:6px">
+            <div class="progress-bar bg-success" style="width:100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const submitBtn = document.getElementById('submitBtn');
+const uploadForm = document.getElementById('uploadForm');
+
+fileInput.addEventListener('change', function() {
+  if (this.files[0]) showFile(this.files[0]);
+});
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.csv')) {
+    fileInput.files = e.dataTransfer.files;
+    showFile(f);
+  }
+});
+
+function showFile(f) {
+  document.getElementById('fileName').textContent = f.name;
+  document.getElementById('fileSize').textContent = `(${(f.size/1024).toFixed(1)} KB)`;
+  document.getElementById('fileSelected').style.display = 'block';
+  submitBtn.disabled = false;
+  uploadZone.classList.add('file-ready');
+}
+
+uploadForm.addEventListener('submit', function() {
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Processing...';
+  submitBtn.disabled = true;
+  document.getElementById('loadingOverlay').style.display = 'flex';
+});
+</script>
+{% endblock %}

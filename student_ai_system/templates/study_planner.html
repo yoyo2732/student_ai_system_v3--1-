@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}AI Study Planner - Student AI{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="container text-center">
+    <h1 class="page-title"><i class="fa-solid fa-calendar-check me-3"></i>AI Study Planner</h1>
+    <p class="page-subtitle">Personalized study schedules powered by machine learning insights</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4">
+    <!-- Custom Plan Generator -->
+    <div class="col-lg-5">
+      <div class="glass-card p-4 mb-4">
+        <h5 class="mb-4"><i class="fa-solid fa-wand-magic-sparkles me-2 text-primary-glow"></i>Generate Custom Plan</h5>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label-sm">Student Name</label>
+            <input type="text" class="form-control glass-input" id="planName" placeholder="e.g. Alice Johnson" value="Student">
+          </div>
+          <div class="col-6">
+            <label class="form-label-sm">Weak Subject</label>
+            <select class="form-select glass-input" id="planWeak">
+              <option value="Mathematics">Mathematics</option>
+              <option value="Science">Science</option>
+              <option value="English">English</option>
+              <option value="Programming">Programming</option>
+              <option value="History">History</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-sm">Study Hours/Day</label>
+            <input type="number" class="form-control glass-input" id="planHours" value="4" min="1" max="12">
+          </div>
+          <div class="col-12">
+            <label class="form-label-sm">Performance Level</label>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="performance" id="perfGood" value="Good">
+              <label class="btn btn-outline-success" for="perfGood">Good</label>
+              <input type="radio" class="btn-check" name="performance" id="perfAvg" value="Average" checked>
+              <label class="btn btn-outline-warning" for="perfAvg">Average</label>
+              <input type="radio" class="btn-check" name="performance" id="perfLow" value="Low">
+              <label class="btn btn-outline-danger" for="perfLow">Low</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label-sm">Dropout Risk Level</label>
+            <select class="form-select glass-input" id="planRisk">
+              <option value="Low">Low Risk</option>
+              <option value="Medium" selected>Medium Risk</option>
+              <option value="High">High Risk</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary-glow w-100" onclick="generatePlan()">
+              <i class="fa-solid fa-calendar-plus me-2"></i>Generate Study Plan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Timetable -->
+      <div class="glass-card p-4">
+        <h5 class="mb-3"><i class="fa-solid fa-clock me-2 text-primary-glow"></i>Daily Schedule Template</h5>
+        <div class="timetable">
+          {% set schedule = [
+            ('6:00 AM', 'Wake up & Morning Revision', 'teal'),
+            ('7:00 AM', 'Breakfast & Light Reading', 'blue'),
+            ('8:00 AM', 'Focus Subject Study Block 1', 'purple'),
+            ('10:00 AM', 'Short Break (15 min)', 'gray'),
+            ('10:15 AM', 'Weak Subject Deep Dive', 'red'),
+            ('12:00 PM', 'Lunch Break', 'gray'),
+            ('1:00 PM', 'Assignment & Practice Problems', 'orange'),
+            ('3:00 PM', 'Review & Note-making', 'green'),
+            ('5:00 PM', 'Break / Extra-Curricular', 'gray'),
+            ('7:00 PM', 'Evening Revision Block', 'blue'),
+            ('9:00 PM', 'Light Reading / Flashcards', 'teal'),
+            ('10:00 PM', 'Sleep (8 hours recommended)', 'gray'),
+          ] %}
+          {% for time, task, color in schedule %}
+          <div class="timetable-row">
+            <div class="time-col">{{ time }}</div>
+            <div class="task-col task-{{ color }}">{{ task }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Plan Output -->
+    <div class="col-lg-7">
+      <div id="planOutput" class="glass-card p-4" style="display:none">
+        <div class="plan-header d-flex justify-content-between align-items-center mb-4">
+          <h5 class="mb-0"><i class="fa-solid fa-book-open me-2 text-primary-glow"></i>
+            Personalized Plan for <span id="planStudentName" class="gradient-text"></span>
+          </h5>
+          <button class="btn btn-glass btn-sm" onclick="downloadPlan()">
+            <i class="fa-solid fa-download me-1"></i>Download
+          </button>
+        </div>
+        <div id="planContent" class="plan-content"></div>
+      </div>
+
+      <div id="planPlaceholder" class="glass-card p-5 text-center">
+        <div class="placeholder-icon"><i class="fa-solid fa-calendar-check"></i></div>
+        <h4>Ready to Plan</h4>
+        <p class="text-muted-soft">Configure the parameters and generate an AI study plan.</p>
+      </div>
+
+      <!-- Student Plans from Dataset -->
+      {% if students %}
+      <div class="glass-card p-4 mt-4">
+        <h5 class="mb-3"><i class="fa-solid fa-users me-2"></i>Dataset Students' Plans</h5>
+        <div class="row g-2">
+          {% for s in students[:12] %}
+          <div class="col-md-6">
+            <div class="student-plan-card" onclick="loadStudentPlan('{{ s.Student_Name }}', '{{ s.Weak_Subject }}', {{ s.Study_Hours }}, '{{ s.Performance }}', '{{ s.Dropout_Risk }}')">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold small">{{ s.Student_Name }}</div>
+                  <div class="text-muted-soft tiny">Weak: {{ s.Weak_Subject }}</div>
+                </div>
+                <span class="badge bg-{{ 'danger' if s.Dropout_Risk == 'High' else 'warning' if s.Dropout_Risk == 'Medium' else 'success' }} badge-xs">
+                  {{ s.Dropout_Risk }}
+                </span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function generatePlan() {
+  const name = document.getElementById('planName').value || 'Student';
+  const weak = document.getElementById('planWeak').value;
+  const hours = document.getElementById('planHours').value;
+  const perf = document.querySelector('input[name="performance"]:checked').value;
+  const risk = document.getElementById('planRisk').value;
+  await renderPlan(name, weak, hours, perf, risk);
+}
+
+async function loadStudentPlan(name, weak, hours, perf, risk) {
+  document.getElementById('planName').value = name;
+  document.getElementById('planWeak').value = weak;
+  document.getElementById('planHours').value = hours;
+  document.querySelectorAll('input[name="performance"]').forEach(r => r.checked = r.value === perf);
+  document.getElementById('planRisk').value = risk;
+  await renderPlan(name, weak, hours, perf, risk);
+}
+
+async function renderPlan(name, weak, hours, perf, risk) {
+  const btn = document.querySelector('.col-lg-5 button');
+  if(btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Generating...'; btn.disabled = true; }
+
+  try {
+    const res = await fetch('/api/study-plan', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ weak_subject: weak, study_hours: +hours, performance: perf })
+    });
+    const data = await res.json();
+
+    const riskColors = { High: '#e74c3c', Medium: '#f39c12', Low: '#27ae60' };
+    const tips = getExamTips(weak, perf, risk);
+
+    const html = `
+      <div class="plan-badges mb-3">
+        <span class="badge" style="background:${riskColors[risk]}">${risk} Dropout Risk</span>
+        <span class="badge bg-primary ms-1">${perf} Performance</span>
+        <span class="badge bg-secondary ms-1">${hours}h/day target</span>
+      </div>
+      <div class="plan-section">
+        <h6><i class="fa-solid fa-bullseye me-2 text-danger"></i>Focus Subject</h6>
+        <p class="plan-highlight">${weak}</p>
+      </div>
+      <div class="plan-section">
+        <h6><i class="fa-solid fa-list-check me-2 text-primary-glow"></i>Daily Action Plan</h6>
+        <pre class="plan-text">${data.plan}</pre>
+      </div>
+      <div class="plan-section">
+        <h6><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Exam Preparation Tips</h6>
+        <ul class="plan-tips">${tips.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>
+      <div class="plan-section">
+        <h6><i class="fa-solid fa-chart-line me-2 text-success"></i>Weekly Progress Targets</h6>
+        ${getProgressBars(perf)}
+      </div>
+    `;
+
+    document.getElementById('planStudentName').textContent = name;
+    document.getElementById('planContent').innerHTML = html;
+    document.getElementById('planPlaceholder').style.display = 'none';
+    document.getElementById('planOutput').style.display = 'block';
+    document.getElementById('planOutput').scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e) { console.error(e); }
+
+  if(btn) { btn.innerHTML = '<i class="fa-solid fa-calendar-plus me-2"></i>Generate Study Plan'; btn.disabled = false; }
+}
+
+function getExamTips(subject, perf, risk) {
+  const base = [
+    "📅 Create a 4-week exam countdown calendar",
+    "📝 Practice past papers under timed conditions",
+    "🧘 Take 10-min breaks every 50 mins (Pomodoro)",
+    "💧 Stay hydrated and maintain sleep schedule"
+  ];
+  const subjectTips = {
+    Mathematics: ["🔢 Focus on formula derivations, not just memorization", "📐 Practice 3 problems daily from each chapter"],
+    Science: ["🔬 Draw diagrams for every concept", "🧪 Review lab experiments and their conclusions"],
+    English: ["📚 Read editorial articles to improve comprehension", "✍️ Write one essay daily for writing practice"],
+    Programming: ["💻 Build one mini-project per week", "🐛 Debug others' code to learn patterns"],
+    History: ["📜 Create chronological timelines", "🗺️ Connect events to their causes and effects"]
+  };
+  if(risk === 'High') base.unshift("⚠️ URGENT: Meet academic advisor this week!");
+  return [...(subjectTips[subject] || []), ...base].slice(0, 5);
+}
+
+function getProgressBars(perf) {
+  const targets = perf === 'Good' ? [85,80,90] : perf === 'Average' ? [70,65,75] : [55,50,60];
+  const labels = ['Attendance Target', 'Assignment Completion', 'Test Score Goal'];
+  return labels.map((l, i) => `
+    <div class="mb-2">
+      <div class="d-flex justify-content-between small mb-1">
+        <span>${l}</span><span class="text-primary-glow">${targets[i]}%</span>
+      </div>
+      <div class="progress" style="height:8px">
+        <div class="progress-bar bg-gradient-primary" style="width:${targets[i]}%"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function downloadPlan() {
+  const name = document.getElementById('planStudentName').textContent;
+  const content = document.getElementById('planContent').innerText;
+  const blob = new Blob([`STUDY PLAN FOR: ${name}\n${'='.repeat(40)}\n\n${content}`], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `study_plan_${name.replace(/\s/g,'_')}.txt`;
+  a.click();
+}
+</script>
+{% endblock %}

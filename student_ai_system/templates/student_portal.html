@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Student Portal — MIT College{% endblock %}
+{% block content %}
+
+<!-- MIT College banner inside portal -->
+<div class="mit-portal-banner">
+  <div class="container d-flex align-items-center gap-3">
+    <img src="{{ url_for('static', filename='mit_logo.png') }}" alt="MIT Logo"
+         style="width:52px;height:52px;object-fit:contain;background:white;border-radius:50%;padding:5px">
+    <div>
+      <div style="font-size:1rem;font-weight:800;color:#e74c3c">MIT College of Railway Engineering, Barshi</div>
+      <div class="tiny text-muted-soft">Student Portal · {{ session.student_roll }} · {{ session.student_branch }}</div>
+    </div>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span class="badge" style="background:rgba(231,76,60,0.2);color:#e74c3c;font-size:.75rem">
+        <i class="fa-solid fa-user-graduate me-1"></i>{{ session.student_name }}
+      </span>
+      <a href="{{ url_for('student_logout') }}" class="btn btn-ghost-sm">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+
+  <!-- Welcome + AI card -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="glass-card p-4" style="border-color:rgba(231,76,60,0.25);background:linear-gradient(135deg,rgba(231,76,60,0.05),rgba(108,92,231,0.05))">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#e74c3c,#c0392b);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:white;font-weight:700;flex-shrink:0">
+            {{ session.student_name[0] }}
+          </div>
+          <div>
+            <h4 class="mb-0 fw-bold">Welcome, {{ session.student_name }}!</h4>
+            <div class="text-muted-soft small">Roll No: {{ session.student_roll }} &nbsp;|&nbsp; {{ session.student_branch }}</div>
+          </div>
+        </div>
+
+        {% if student_data %}
+        <!-- AI Insight for this student -->
+        <div class="p-3 rounded-3 mb-3" style="background:rgba(108,92,231,0.08);border:1px solid rgba(108,92,231,0.2)">
+          <div class="d-flex gap-2">
+            <i class="fa-solid fa-robot mt-1" style="color:var(--purple)"></i>
+            <div>
+              <div class="small fw-semibold mb-1">Your AI Academic Insight</div>
+              <p class="small text-muted-soft mb-0">{{ student_data.AI_Insight }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key stats -->
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <div class="text-center p-2 rounded-3" style="background:rgba({{ '231,76,60' if student_data.Dropout_Risk=='High' else '243,156,18' if student_data.Dropout_Risk=='Medium' else '39,174,96' }},0.1)">
+              <div class="tiny text-muted-soft mb-1">Dropout Risk</div>
+              <span class="badge bg-{{ 'danger' if student_data.Dropout_Risk=='High' else 'warning' if student_data.Dropout_Risk=='Medium' else 'success' }}">{{ student_data.Dropout_Risk }}</span>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-center p-2 rounded-3" style="background:rgba(108,92,231,0.08)">
+              <div class="tiny text-muted-soft mb-1">Performance</div>
+              <span class="badge bg-{{ 'success' if student_data.Performance=='Good' else 'warning' if student_data.Performance=='Average' else 'danger' }}">{{ student_data.Performance }}</span>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-center p-2 rounded-3" style="background:rgba(39,174,96,0.08)">
+              <div class="tiny text-muted-soft mb-1">Health Score</div>
+              <div class="fw-bold" style="color:{{ '#27ae60' if student_data.Health_Score >= 70 else '#f39c12' if student_data.Health_Score >= 50 else '#e74c3c' }}">{{ student_data.Health_Score }}/100</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-center p-2 rounded-3" style="background:rgba(0,168,255,0.08)">
+              <div class="tiny text-muted-soft mb-1">Attendance</div>
+              <div class="fw-bold">{{ student_data.Attendance }}%</div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center py-3">
+          <i class="fa-solid fa-circle-info me-2" style="color:var(--blue)"></i>
+          <span class="text-muted-soft small">Your prediction data will appear here once the admin uploads your dataset.</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="col-lg-4">
+      <div class="glass-card p-4 h-100">
+        <h6 class="chart-title mb-3">Quick Actions</h6>
+        <div class="d-flex flex-column gap-2">
+          <a href="{{ url_for('student_planner') }}" class="btn btn-primary-glow text-start d-flex align-items-center gap-2 py-2">
+            <i class="fa-solid fa-calendar-check fa-lg"></i>
+            <div><div class="fw-semibold">AI Study Planner</div><div class="tiny opacity-75">Personalized schedule</div></div>
+          </a>
+          <a href="{{ url_for('student_feedback') }}" class="btn d-flex align-items-center gap-2 py-2"
+             style="background:linear-gradient(135deg,#e74c3c,#c0392b);border:none;color:white;border-radius:var(--r-sm)">
+            <i class="fa-solid fa-star fa-lg"></i>
+            <div><div class="fw-semibold">Give Teacher Feedback</div><div class="tiny opacity-75">Rate subject teachers</div></div>
+          </a>
+          {% if student_data %}
+          <button class="btn btn-glass text-start d-flex align-items-center gap-2 py-2" data-bs-toggle="collapse" data-bs-target="#subjectCard">
+            <i class="fa-solid fa-book-open fa-lg text-primary-glow"></i>
+            <div><div class="fw-semibold">My Subject Scores</div><div class="tiny text-muted-soft">View breakdown</div></div>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subject breakdown (collapsible) -->
+  {% if student_data %}
+  <div class="collapse mb-4" id="subjectCard">
+    <div class="glass-card p-4">
+      <h6 class="chart-title mb-3"><i class="fa-solid fa-chart-bar me-2"></i>Subject Score Breakdown</h6>
+      <div class="row g-3">
+        {% for subj, col in [('Subject_Math','Mathematics'),('Subject_Science','Science'),('Subject_English','English'),('Subject_Programming','Programming'),('Subject_History','History')] %}
+        {% set score = student_data[subj] | int %}
+        <div class="col-md-4">
+          <div class="p-3 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small fw-semibold">{{ col }}</span>
+              <span class="small fw-bold" style="color:{{ '#27ae60' if score>=75 else '#f39c12' if score>=50 else '#e74c3c' }}">{{ score }}</span>
+            </div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar" style="width:{{ score }}%;background:{{ '#27ae60' if score>=75 else '#f39c12' if score>=50 else '#e74c3c' }}"></div>
+            </div>
+            {% if col == student_data.Strong_Subject %}<div class="tiny mt-1" style="color:#27ae60"><i class="fa-solid fa-star me-1"></i>Strongest Subject</div>{% endif %}
+            {% if col == student_data.Weak_Subject %}<div class="tiny mt-1" style="color:#e74c3c"><i class="fa-solid fa-triangle-exclamation me-1"></i>Needs Improvement</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Notifications for this student -->
+  {% if notifications %}
+  <div class="glass-card p-4 mb-4" style="border-color:rgba(231,76,60,0.3)">
+    <h6 class="mb-3"><i class="fa-solid fa-bell text-danger me-2"></i>Notices for You</h6>
+    {% for n in notifications %}
+    <div class="p-3 rounded-3 mb-2" style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2)">
+      <div class="small">{{ n.message }}</div>
+      <div class="tiny text-muted-soft mt-1">{{ n.timestamp }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- My Feedback History -->
+  {% if my_feedbacks %}
+  <div class="glass-card p-4">
+    <h6 class="mb-3"><i class="fa-solid fa-history me-2 text-primary-glow"></i>My Submitted Feedback</h6>
+    <div class="row g-3">
+      {% for fb in my_feedbacks %}
+      <div class="col-md-6">
+        <div class="p-3 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <div class="fw-semibold small">{{ fb.subject }}</div>
+              <div class="tiny text-muted-soft">{{ fb.teacher }}</div>
+            </div>
+            <div class="text-warning">
+              {% for i in range(fb.rating) %}<i class="fa-solid fa-star" style="font-size:.7rem"></i>{% endfor %}
+              {% for i in range(5 - fb.rating) %}<i class="fa-regular fa-star" style="font-size:.7rem;opacity:.3"></i>{% endfor %}
+            </div>
+          </div>
+          {% if fb.comment %}<p class="tiny text-muted-soft mb-1">"{{ fb.comment }}"</p>{% endif %}
+          <div class="tiny text-muted-soft">{{ fb.timestamp }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

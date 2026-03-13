@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}2FA Setup - Student AI{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:500px">
+  <div class="glass-card p-4">
+    <div class="text-center mb-4">
+      <div class="feature-icon icon-purple mx-auto mb-3"><i class="fa-solid fa-shield-halved"></i></div>
+      <h3>Two-Factor Authentication</h3>
+      <p class="text-muted-soft">Secure your account with a TOTP authenticator app</p>
+    </div>
+    {% if has_2fa %}
+    <div class="alert alert-success glass-alert text-center mb-4">
+      <i class="fa-solid fa-circle-check me-2"></i><strong>2FA is currently ENABLED</strong>
+    </div>
+    <button class="btn btn-danger w-100 mb-3" onclick="disable2fa()">
+      <i class="fa-solid fa-shield-xmark me-2"></i>Disable 2FA
+    </button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-glass w-100">Back to Dashboard</a>
+    {% else %}
+    <div class="text-center mb-4">
+      <p class="text-muted-soft small mb-3">Scan this QR code with Google Authenticator or Authy:</p>
+      <div class="qr-container p-3 d-inline-block bg-white rounded-3">
+        <img src="data:image/png;base64,{{ qr_b64 }}" width="200" height="200" alt="2FA QR Code">
+      </div>
+      <p class="text-muted-soft small mt-3">Manual key: <code class="text-primary-glow">{{ secret }}</code></p>
+    </div>
+    <form method="POST">
+      <label class="form-label-sm">Enter 6-digit code from your app</label>
+      <div class="d-flex gap-2 mb-3">
+        <input type="text" name="code" class="form-control glass-input text-center fs-4 letter-spacing-wide"
+               placeholder="000000" maxlength="6" pattern="\d{6}" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary-glow w-100">
+        <i class="fa-solid fa-check me-2"></i>Verify & Enable 2FA
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function disable2fa() {
+  if (!confirm('Disable 2FA? This will reduce your account security.')) return;
+  const res = await fetch('/admin/2fa/disable', {method:'POST'});
+  if ((await res.json()).success) location.reload();
+}
+</script>
+{% endblock %}

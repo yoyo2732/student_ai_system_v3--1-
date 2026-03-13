@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block title %}Prediction Results - Student AI{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="container text-center">
+    <h1 class="page-title"><i class="fa-solid fa-chart-bar me-3"></i>Prediction Results</h1>
+    <p class="page-subtitle">AI analysis of {{ students|length }} students — click any row for deep profile</p>
+  </div>
+</div>
+
+<div class="container py-4">
+  {% if analytics %}
+  <!-- KPI Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card stat-card-blue"><div class="stat-card-icon"><i class="fa-solid fa-users"></i></div><div class="stat-card-value">{{ analytics.total }}</div><div class="stat-card-label">Total Students</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card stat-card-red"><div class="stat-card-icon"><i class="fa-solid fa-fire"></i></div><div class="stat-card-value">{{ analytics.high_risk_count }}</div><div class="stat-card-label">High Risk</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card stat-card-green"><div class="stat-card-icon"><i class="fa-solid fa-heart-pulse"></i></div><div class="stat-card-value">{{ analytics.avg_health }}</div><div class="stat-card-label">Avg Health Score</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card stat-card-purple"><div class="stat-card-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="stat-card-value">{{ analytics.anomaly_count }}</div><div class="stat-card-label">Anomalies</div></div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="glass-card p-4"><h6 class="chart-title">Dropout Risk</h6><canvas id="dropChart" height="200"></canvas></div></div>
+    <div class="col-md-4"><div class="glass-card p-4"><h6 class="chart-title">Performance</h6><canvas id="perfChart" height="200"></canvas></div></div>
+    <div class="col-md-4"><div class="glass-card p-4"><h6 class="chart-title">Weak Subjects</h6><canvas id="weakChart" height="200"></canvas></div></div>
+  </div>
+
+  <!-- Top 10 Leaderboard -->
+  <div class="glass-card p-4 mb-4">
+    <h5 class="mb-3"><i class="fa-solid fa-trophy me-2 text-warning"></i>Academic Health Leaderboard — Top 10</h5>
+    <div class="leaderboard-list">
+      {% for s in leaderboard %}
+      <div class="leaderboard-row" onclick="openProfile('{{ s.Student_ID }}')">
+        <div class="lb-rank {{ 'lb-gold' if loop.index == 1 else 'lb-silver' if loop.index == 2 else 'lb-bronze' if loop.index == 3 else '' }}">
+          {{ '🥇' if loop.index == 1 else '🥈' if loop.index == 2 else '🥉' if loop.index == 3 else loop.index }}
+        </div>
+        <div class="student-avatar">{{ s.Student_Name[0] if s.Student_Name else '?' }}</div>
+        <div class="lb-name">{{ s.Student_Name }}</div>
+        <div class="lb-bar-wrap">
+          <div class="lb-bar" style="width:{{ s.Health_Score }}%"></div>
+          <span class="lb-score">{{ s.Health_Score }}</span>
+        </div>
+        <span class="badge bg-{{ risk_badge(s.Dropout_Risk) }} ms-2">{{ s.Dropout_Risk }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Results Table -->
+  <div class="glass-card p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <h5 class="mb-0"><i class="fa-solid fa-table me-2"></i>All Students
+        <small class="text-muted-soft ms-2 fs-6">Click any row for AI profile</small>
+      </h5>
+      <div class="d-flex gap-2 flex-wrap">
+        <select class="form-select glass-input" id="filterRisk" style="width:140px">
+          <option value="">All Risks</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <input type="text" class="form-control glass-input" id="searchInput" placeholder="🔍 Search..." style="width:200px">
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-results table-hover" id="resultsTable">
+        <thead><tr>
+          <th>#</th><th>Student</th><th>Attendance</th><th>Study Hrs</th>
+          <th>Dropout Risk</th><th>Performance</th><th>Health</th>
+          <th>Strong</th><th>Weak</th><th>Anomaly</th>
+        </tr></thead>
+        <tbody>
+          {% for s in students %}
+          <tr class="student-row" onclick="openProfile('{{ s.Student_ID }}')" data-risk="{{ s.Dropout_Risk }}">
+            <td>{{ loop.index }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="student-avatar">{{ s.Student_Name[0] if s.Student_Name else '?' }}</div>
+                <div>
+                  <div class="fw-semibold small">{{ s.Student_Name }}</div>
+                  <div class="tiny text-muted-soft">{{ s.Student_ID }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <div style="width:50px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px">
+                  <div style="width:{{ s.Attendance }}%;height:100%;background:var(--gradient-primary);border-radius:3px"></div>
+                </div>
+                <span class="small">{{ s.Attendance }}%</span>
+              </div>
+            </td>
+            <td>{{ s.Study_Hours }}h</td>
+            <td>
+              <span class="badge bg-{{ risk_badge(s.Dropout_Risk) }}">
+                {% if s.Dropout_Risk == 'High' %}<i class="fa-solid fa-fire me-1"></i>{% endif %}{{ s.Dropout_Risk }}
+              </span>
+            </td>
+            <td><span class="badge bg-{{ perf_badge(s.Performance) }}">{{ s.Performance }}</span></td>
+            <td>
+              <div class="health-ring-sm" style="--h:{{ s.Health_Score }};--c:{{ '#27ae60' if s.Health_Score >= 70 else '#f39c12' if s.Health_Score >= 50 else '#e74c3c' }}">
+                <span>{{ s.Health_Score }}</span>
+              </div>
+            </td>
+            <td><span class="subject-tag subject-strong">{{ s.Strong_Subject }}</span></td>
+            <td><span class="subject-tag subject-weak">{{ s.Weak_Subject }}</span></td>
+            <td>{% if s.Is_Anomaly %}<span class="badge bg-warning text-dark"><i class="fa-solid fa-triangle-exclamation me-1"></i>Anomaly</span>{% else %}<span class="text-muted-soft small">—</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Student Profile Modal ─────────────────────────────────── -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content glass-modal">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="modalTitle"><i class="fa-solid fa-user-graduate me-2"></i>Student Profile</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-2" id="modalBody">
+        <div class="text-center py-4"><div class="spinner-ring mx-auto"></div><p class="text-muted-soft mt-2">Loading AI analysis...</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ─── Chart setup ─────────────────────────────────────
+{% if analytics %}
+const analytics = {{ analytics | tojson }};
+new Chart(document.getElementById('dropChart'), {
+  type:'doughnut', data:{labels:Object.keys(analytics.dropout_dist||{}), datasets:[{data:Object.values(analytics.dropout_dist||{}), backgroundColor:['#e74c3c','#f39c12','#27ae60'], borderWidth:0}]},
+  options:{plugins:{legend:{labels:{color:'#a8b2c1'}}}}
+});
+new Chart(document.getElementById('perfChart'), {
+  type:'bar', data:{labels:Object.keys(analytics.perf_dist||{}), datasets:[{data:Object.values(analytics.perf_dist||{}), backgroundColor:['#27ae60','#f39c12','#e74c3c'], borderRadius:8}]},
+  options:{plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#a8b2c1'}}, y:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.05)'}}}}
+});
+new Chart(document.getElementById('weakChart'), {
+  type:'polarArea', data:{labels:Object.keys(analytics.weak_subjects||{}), datasets:[{data:Object.values(analytics.weak_subjects||{}), backgroundColor:['rgba(108,92,231,0.7)','rgba(0,168,255,0.7)','rgba(0,206,201,0.7)','rgba(253,121,168,0.7)','rgba(255,159,67,0.7)']}]},
+  options:{plugins:{legend:{labels:{color:'#a8b2c1'}}}}
+});
+{% endif %}
+
+// ─── Search & Filter ─────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('filterRisk').addEventListener('change', applyFilters);
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const risk = document.getElementById('filterRisk').value;
+  document.querySelectorAll('#resultsTable tbody tr').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const rowRisk = row.dataset.risk;
+    row.style.display = (text.includes(q) && (!risk || rowRisk === risk)) ? '' : 'none';
+  });
+}
+
+// ─── Student Profile Modal ───────────────────────────
+let currentStudentData = null;
+let whatifBase = {};
+let radarChart = null, shapChart = null;
+
+async function openProfile(id) {
+  const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+  document.getElementById('modalBody').innerHTML = '<div class="text-center py-4"><div class="spinner-ring mx-auto"></div><p class="text-muted-soft mt-2">Loading AI analysis...</p></div>';
+  modal.show();
+  try {
+    const res = await fetch(`/student-profile/${id}`);
+    const data = await res.json();
+    if (data.error) { document.getElementById('modalBody').innerHTML = `<p class="text-danger">${data.error}</p>`; return; }
+    currentStudentData = data.student;
+    whatifBase = { ...data.student };
+    renderProfile(data.student, data.shap);
+  } catch(e) { console.error(e); }
+}
+
+function renderProfile(s, shap) {
+  const riskColor = {High:'#e74c3c', Medium:'#f39c12', Low:'#27ae60'}[s.Dropout_Risk] || '#6c5ce7';
+  const perfColor = {Good:'#27ae60', Average:'#f39c12', Low:'#e74c3c'}[s.Performance] || '#6c5ce7';
+  document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-user-graduate me-2"></i>${s.Student_Name} — AI Profile`;
+
+  document.getElementById('modalBody').innerHTML = `
+  <div class="row g-4">
+    <!-- Left: Stats + Radar -->
+    <div class="col-lg-5">
+      <div class="profile-header-card p-3 rounded-3 mb-3" style="border:1px solid ${riskColor}33;background:${riskColor}11">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="profile-avatar-lg" style="background:${riskColor}">${(s.Student_Name||'?')[0]}</div>
+          <div>
+            <h5 class="mb-0">${s.Student_Name}</h5>
+            <div class="text-muted-soft small">ID: ${s.Student_ID}</div>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6"><div class="mini-stat"><div class="mini-stat-label">Dropout Risk</div><span class="badge fs-6" style="background:${riskColor}">${s.Dropout_Risk}</span></div></div>
+          <div class="col-6"><div class="mini-stat"><div class="mini-stat-label">Performance</div><span class="badge fs-6" style="background:${perfColor}">${s.Performance}</span></div></div>
+          <div class="col-6"><div class="mini-stat"><div class="mini-stat-label">Health Score</div><div class="fw-bold fs-5" style="color:${s.Health_Score>=70?'#27ae60':s.Health_Score>=50?'#f39c12':'#e74c3c'}">${s.Health_Score}/100</div></div></div>
+          <div class="col-6"><div class="mini-stat"><div class="mini-stat-label">Confidence</div><div class="fw-bold fs-5">${s.Confidence}%</div></div></div>
+        </div>
+        ${s.Is_Anomaly ? '<div class="alert alert-warning p-2 mt-2 mb-0 small"><i class="fa-solid fa-triangle-exclamation me-1"></i><strong>Anomaly Detected</strong> — This student\'s data is statistically unusual. Manual review recommended.</div>' : ''}
+      </div>
+      <div class="glass-card p-3 mb-3">
+        <h6 class="chart-title mb-2">Subject Radar</h6>
+        <canvas id="radarCanvas" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Right: SHAP + What-If + Insight -->
+    <div class="col-lg-7">
+      <!-- NLP Insight -->
+      <div class="insight-card p-3 mb-3 rounded-3">
+        <div class="d-flex align-items-start gap-2">
+          <i class="fa-solid fa-robot text-primary-glow mt-1"></i>
+          <div>
+            <div class="fw-semibold small mb-1">AI Insight</div>
+            <p class="small text-muted-soft mb-0">${s.AI_Insight || '—'}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHAP Chart -->
+      <div class="glass-card p-3 mb-3">
+        <h6 class="chart-title mb-2"><i class="fa-solid fa-magnifying-glass-chart me-1"></i>Explainability — Risk Drivers</h6>
+        <canvas id="shapCanvas" height="200"></canvas>
+        <p class="tiny text-muted-soft mt-2">🟥 Risk factors &nbsp; 🟩 Protective factors — based on feature importance analysis</p>
+      </div>
+
+      <!-- What-If Simulator -->
+      <div class="glass-card p-3">
+        <h6 class="chart-title mb-3"><i class="fa-solid fa-sliders me-1"></i>What-If Simulator</h6>
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label-sm">Attendance → <span id="wiAttVal">${s.Attendance}</span>%</label>
+            <input type="range" class="form-range" id="wiAtt" min="0" max="100" value="${s.Attendance}" oninput="document.getElementById('wiAttVal').textContent=this.value;runWhatIf()"></div>
+          <div class="col-6"><label class="form-label-sm">Study Hours → <span id="wiHrsVal">${s.Study_Hours}</span>h</label>
+            <input type="range" class="form-range" id="wiHrs" min="0" max="12" value="${s.Study_Hours}" oninput="document.getElementById('wiHrsVal').textContent=this.value;runWhatIf()"></div>
+          <div class="col-6"><label class="form-label-sm">Family Support</label>
+            <select class="form-select glass-input form-select-sm" id="wiFamily" onchange="runWhatIf()">
+              <option value="1" ${s.Family_Support==1?'selected':''}>Yes</option>
+              <option value="0" ${s.Family_Support==0?'selected':''}>No</option>
+            </select></div>
+          <div class="col-6"><label class="form-label-sm">Financial Issues</label>
+            <select class="form-select glass-input form-select-sm" id="wiFinancial" onchange="runWhatIf()">
+              <option value="0" ${s.Financial_Issues==0?'selected':''}>No</option>
+              <option value="1" ${s.Financial_Issues==1?'selected':''}>Yes</option>
+            </select></div>
+        </div>
+        <div id="whatifResult" class="mt-3 p-3 rounded-3" style="background:rgba(108,92,231,0.08);border:1px solid rgba(108,92,231,0.2);display:none">
+          <div class="row g-2 text-center">
+            <div class="col-4"><div class="tiny text-muted-soft">New Risk</div><div id="wiRisk" class="fw-bold"></div></div>
+            <div class="col-4"><div class="tiny text-muted-soft">New Perf</div><div id="wiPerf" class="fw-bold"></div></div>
+            <div class="col-4"><div class="tiny text-muted-soft">Health Δ</div><div id="wiDelta" class="fw-bold"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // Render Radar chart
+  setTimeout(() => {
+    const rCtx = document.getElementById('radarCanvas');
+    if (rCtx) {
+      if (radarChart) radarChart.destroy();
+      radarChart = new Chart(rCtx, {
+        type:'radar',
+        data:{
+          labels:['Math','Science','English','Programming','History'],
+          datasets:[{
+            label:'Subject Scores', borderColor:'rgba(108,92,231,0.9)',
+            backgroundColor:'rgba(108,92,231,0.15)', pointBackgroundColor:'rgba(108,92,231,1)',
+            data:[s.Subject_Math, s.Subject_Science, s.Subject_English, s.Subject_Programming, s.Subject_History]
+          }]
+        },
+        options:{scales:{r:{min:0, max:100, ticks:{color:'#a8b2c1', stepSize:20}, grid:{color:'rgba(255,255,255,0.08)'}, pointLabels:{color:'#a8b2c1'}}}, plugins:{legend:{display:false}}}
+      });
+    }
+
+    // SHAP Chart
+    const sCtx = document.getElementById('shapCanvas');
+    if (sCtx && shap && shap.length) {
+      if (shapChart) shapChart.destroy();
+      const labels = shap.map(f => f.label);
+      const vals = shap.map(f => f.contribution);
+      const bgColors = shap.map(f => f.direction === 'risk' ? 'rgba(231,76,60,0.75)' : 'rgba(39,174,96,0.75)');
+      shapChart = new Chart(sCtx, {
+        type:'bar',
+        data:{labels, datasets:[{data:vals, backgroundColor:bgColors, borderRadius:4}]},
+        options:{
+          indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>`Impact: ${c.raw.toFixed(2)}`}}},
+          scales:{x:{ticks:{color:'#a8b2c1'}, grid:{color:'rgba(255,255,255,0.05)'}}, y:{ticks:{color:'#a8b2c1'}}}
+        }
+      });
+    }
+  }, 100);
+}
+
+let wiTimeout = null;
+async function runWhatIf() {
+  clearTimeout(wiTimeout);
+  wiTimeout = setTimeout(async () => {
+    const changes = {
+      Attendance: +document.getElementById('wiAtt').value,
+      Study_Hours: +document.getElementById('wiHrs').value,
+      Family_Support: +document.getElementById('wiFamily').value,
+      Financial_Issues: +document.getElementById('wiFinancial').value
+    };
+    const res = await fetch('/whatif', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({base:whatifBase, changes})});
+    const data = await res.json();
+    const box = document.getElementById('whatifResult');
+    if (box) {
+      box.style.display = 'block';
+      const riskColor = {High:'#e74c3c',Medium:'#f39c12',Low:'#27ae60'};
+      document.getElementById('wiRisk').innerHTML = `<span style="color:${riskColor[data.modified.dropout_risk]}">${data.modified.dropout_risk}</span>`;
+      document.getElementById('wiPerf').textContent = data.modified.performance;
+      const delta = data.health_delta;
+      document.getElementById('wiDelta').innerHTML = `<span style="color:${delta>=0?'#27ae60':'#e74c3c'}">${delta>0?'+':''}${delta}</span>`;
+    }
+  }, 300);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Teacher Feedback — MIT College Student Portal{% endblock %}
+
+{% block content %}
+<!-- MIT Banner -->
+<div class="mit-portal-banner">
+  <div class="container d-flex align-items-center gap-3">
+    <img src="{{ url_for('static', filename='mit_logo.png') }}" alt="MIT Logo"
+         style="width:48px;height:48px;object-fit:contain;background:white;border-radius:50%;padding:5px">
+    <div>
+      <div style="font-size:.95rem;font-weight:800;color:#e74c3c">MIT College of Railway Engineering, Barshi</div>
+      <div class="tiny text-muted-soft">Teacher Feedback Portal</div>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+      <a href="{{ url_for('student_portal') }}" class="btn btn-ghost-sm"><i class="fa-solid fa-arrow-left me-1"></i>Portal</a>
+      <a href="{{ url_for('student_logout') }}" class="btn btn-ghost-sm"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4" style="max-width:860px">
+
+  <div class="page-hero rounded-3 mb-4 p-4" style="background:linear-gradient(135deg,rgba(231,76,60,0.08),rgba(108,92,231,0.05));border:1px solid rgba(231,76,60,0.15)">
+    <h2 class="fw-bold mb-1"><i class="fa-solid fa-star me-2" style="color:#e74c3c"></i>Teacher Feedback</h2>
+    <p class="text-muted-soft mb-0">Share your honest feedback to help improve teaching quality at MIT College</p>
+  </div>
+
+  <!-- Feedback Form -->
+  <div class="glass-card p-4 mb-4">
+    <h5 class="mb-4 fw-bold"><i class="fa-solid fa-pen-to-square me-2 text-primary-glow"></i>Submit New Feedback</h5>
+    <form method="POST" id="feedbackForm">
+
+      <!-- Subject + Teacher row -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label-sm">Select Subject</label>
+          <select name="subject" class="form-select glass-input" required id="subjectSelect" onchange="updateTeacher()">
+            <option value="">— Choose Subject —</option>
+            {% for subject, teacher in subject_teachers.items() %}
+            <option value="{{ subject }}">{{ subject }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label-sm">Subject Teacher</label>
+          <input type="text" id="teacherDisplay" class="form-control glass-input" placeholder="Auto-filled after selecting subject" readonly>
+          <input type="hidden" name="teacher" id="teacherHidden">
+        </div>
+      </div>
+
+      <!-- Overall Rating (big stars) -->
+      <div class="mb-4">
+        <label class="form-label-sm">Overall Rating</label>
+        <div class="star-rating-container">
+          {% for i in range(1,6) %}
+          <input type="radio" name="rating" id="star{{ i }}" value="{{ i }}" {% if i==4 %}checked{% endif %} class="star-radio">
+          <label for="star{{ i }}" class="star-label" title="{{ i }} star{{ 's' if i>1 }}">
+            <i class="fa-solid fa-star"></i>
+          </label>
+          {% endfor %}
+          <span class="star-desc ms-3 text-muted-soft small" id="starDesc">Good</span>
+        </div>
+      </div>
+
+      <!-- Sub-ratings -->
+      <div class="row g-3 mb-4">
+        {% for field, label, icon in [
+            ('teaching_quality','Teaching Quality','chalkboard-teacher'),
+            ('clarity','Concept Clarity','lightbulb'),
+            ('support','Student Support','hands-helping')
+        ] %}
+        <div class="col-md-4">
+          <label class="form-label-sm"><i class="fa-solid fa-{{ icon }} me-1"></i>{{ label }}</label>
+          <div class="sub-rating-row d-flex align-items-center gap-2">
+            <input type="range" name="{{ field }}" class="form-range flex-grow-1"
+                   min="1" max="5" value="3" id="{{ field }}Range"
+                   oninput="document.getElementById('{{ field }}Val').textContent=this.value">
+            <span class="badge bg-secondary" id="{{ field }}Val">3</span>
+          </div>
+          <div class="d-flex justify-content-between tiny text-muted-soft mt-1">
+            <span>Poor</span><span>Average</span><span>Excellent</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Comment -->
+      <div class="mb-4">
+        <label class="form-label-sm">Additional Comments <span class="text-muted-soft">(optional)</span></label>
+        <textarea name="comment" class="form-control glass-input" rows="4"
+                  placeholder="Share specific feedback about teaching methods, classroom environment, or suggestions for improvement..."
+                  maxlength="500" id="commentField"
+                  oninput="document.getElementById('charCount').textContent=this.value.length"></textarea>
+        <div class="text-end tiny text-muted-soft mt-1"><span id="charCount">0</span>/500</div>
+      </div>
+
+      <!-- Anonymous notice -->
+      <div class="p-3 rounded-3 mb-4" style="background:rgba(0,168,255,0.07);border:1px solid rgba(0,168,255,0.2)">
+        <i class="fa-solid fa-shield-halved me-2" style="color:var(--blue)"></i>
+        <span class="small text-muted-soft">Your feedback is confidential. Only admin staff can view individual responses.</span>
+      </div>
+
+      <button type="submit" class="btn btn-lg fw-bold px-5"
+              style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;border:none;border-radius:12px">
+        <i class="fa-solid fa-paper-plane me-2"></i>Submit Feedback
+      </button>
+    </form>
+  </div>
+
+  <!-- Previous feedback by this student -->
+  {% if my_feedbacks %}
+  <div class="glass-card p-4">
+    <h5 class="mb-4 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-muted-soft"></i>My Previous Feedback</h5>
+    <div class="row g-3">
+      {% for fb in my_feedbacks %}
+      <div class="col-md-6">
+        <div class="p-3 rounded-3 h-100" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <div class="fw-semibold">{{ fb.subject }}</div>
+              <div class="small text-muted-soft"><i class="fa-solid fa-chalkboard-user me-1"></i>{{ fb.teacher }}</div>
+            </div>
+            <div>
+              {% for i in range(fb.rating) %}<i class="fa-solid fa-star text-warning" style="font-size:.8rem"></i>{% endfor %}
+              {% for i in range(5 - fb.rating) %}<i class="fa-regular fa-star text-muted-soft" style="font-size:.8rem"></i>{% endfor %}
+            </div>
+          </div>
+          <div class="d-flex gap-2 mb-2 flex-wrap">
+            <span class="tiny badge bg-secondary">Teaching: {{ fb.teaching_quality }}/5</span>
+            <span class="tiny badge bg-secondary">Clarity: {{ fb.clarity }}/5</span>
+            <span class="tiny badge bg-secondary">Support: {{ fb.support }}/5</span>
+          </div>
+          {% if fb.comment %}
+          <p class="small text-muted-soft fst-italic mb-1">"{{ fb.comment }}"</p>
+          {% endif %}
+          <div class="tiny text-muted-soft mt-2"><i class="fa-regular fa-clock me-1"></i>{{ fb.timestamp }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const teacherMap = {{ subject_teachers | tojson }};
+const starDescs = {1:'Poor',2:'Fair',3:'Good',4:'Very Good',5:'Excellent'};
+
+function updateTeacher() {
+  const subj = document.getElementById('subjectSelect').value;
+  const t = teacherMap[subj] || '';
+  document.getElementById('teacherDisplay').value = t;
+  document.getElementById('teacherHidden').value = t;
+}
+
+// Star rating interaction
+document.querySelectorAll('.star-radio').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.getElementById('starDesc').textContent = starDescs[this.value] || '';
+    document.querySelectorAll('.star-label').forEach((lbl, i) => {
+      lbl.style.color = (i < this.value) ? '#f39c12' : 'rgba(255,255,255,0.2)';
+    });
+  });
+});
+// Init star colors
+document.querySelectorAll('.star-label').forEach((lbl, i) => {
+  lbl.style.color = i < 4 ? '#f39c12' : 'rgba(255,255,255,0.2)';
+});
+</script>
+<style>
+.star-rating-container { display:flex; align-items:center; gap:4px; }
+.star-radio { display:none; }
+.star-label { font-size:2rem; cursor:pointer; color:rgba(255,255,255,0.2); transition:color 0.15s, transform 0.15s; }
+.star-label:hover { color:#f39c12 !important; transform:scale(1.15); }
+</style>
+{% endblock %}

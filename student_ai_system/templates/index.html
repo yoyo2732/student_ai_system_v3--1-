@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}Student AI - Intelligent Academic Analytics{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-bg-animation">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="container text-center hero-content">
+    <div class="hero-badge animate-fade-up">
+      <i class="fa-solid fa-robot me-2"></i>AI-Powered Academic Intelligence
+    </div>
+    <h1 class="hero-title animate-fade-up delay-1">
+      Predict. <span class="gradient-text">Prevent.</span> Succeed.
+    </h1>
+    <p class="hero-subtitle animate-fade-up delay-2">
+      Advanced machine learning platform that identifies student dropout risks,
+      predicts performance outcomes, and generates personalized study plans.
+    </p>
+    <div class="hero-buttons animate-fade-up delay-3">
+      <a href="{{ url_for('upload') }}" class="btn btn-primary-glow btn-lg">
+        <i class="fa-solid fa-rocket me-2"></i>Get Started
+      </a>
+      <a href="{{ url_for('admin_login') }}" class="btn btn-glass btn-lg">
+        <i class="fa-solid fa-shield-halved me-2"></i>Admin Portal
+      </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="hero-stats animate-fade-up delay-4">
+      <div class="hero-stat">
+        <div class="stat-number" id="statPredictions">{{ stats.total_predictions }}</div>
+        <div class="stat-label">Predictions Made</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-number">95%+</div>
+        <div class="stat-label">Model Accuracy</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Subject Analysis</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-number">Real-time</div>
+        <div class="stat-label">AI Processing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Everything You Need to <span class="gradient-text">Support Students</span></h2>
+      <p>A complete academic intelligence platform with ML-driven insights</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card animate-card">
+          <div class="feature-icon icon-purple">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <h3>ML Predictions</h3>
+          <p>RandomForest & GradientBoosting models trained on academic data to predict dropout risk and performance levels.</p>
+          <div class="feature-tags">
+            <span class="tag">High / Medium / Low Risk</span>
+            <span class="tag">Good / Average / Low Performance</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card animate-card delay-1">
+          <div class="feature-icon icon-blue">
+            <i class="fa-solid fa-file-csv"></i>
+          </div>
+          <h3>Batch CSV Processing</h3>
+          <p>Upload entire class datasets and get instant predictions for all students with a single click.</p>
+          <div class="feature-tags">
+            <span class="tag">Bulk Analysis</span>
+            <span class="tag">Auto Subject Detection</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card animate-card delay-2">
+          <div class="feature-icon icon-green">
+            <i class="fa-solid fa-calendar-days"></i>
+          </div>
+          <h3>AI Study Planner</h3>
+          <p>Personalized daily study schedules generated based on weak subjects, study hours, and performance level.</p>
+          <div class="feature-tags">
+            <span class="tag">Daily Schedule</span>
+            <span class="tag">Exam Prep Tips</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card animate-card">
+          <div class="feature-icon icon-orange">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <h3>Analytics Dashboard</h3>
+          <p>Interactive charts showing dropout distribution, performance trends, and subject weakness patterns.</p>
+          <div class="feature-tags">
+            <span class="tag">Chart.js Visuals</span>
+            <span class="tag">Live Data</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card animate-card delay-1">
+          <div class="feature-icon icon-red">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h3>Secure Admin Panel</h3>
+          <p>Protected admin dashboard with session auth, attempt lockout, and full student management tools.</p>
+          <div class="feature-tags">
+            <span class="tag">3-Attempt Lock</span>
+            <span class="tag">Student Management</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card animate-card delay-2">
+          <div class="feature-icon icon-teal">
+            <i class="fa-solid fa-file-arrow-down"></i>
+          </div>
+          <h3>Report Exports</h3>
+          <p>Download comprehensive reports in CSV, Excel, and PDF formats with full prediction data.</p>
+          <div class="feature-tags">
+            <span class="tag">CSV / Excel / PDF</span>
+            <span class="tag">One-Click Export</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Predict Section -->
+<section class="quick-predict-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <h2>Try a <span class="gradient-text">Live Prediction</span></h2>
+        <p class="text-muted-soft">Enter student data below and get an instant AI-powered risk assessment.</p>
+        <div class="quick-form glass-card p-4">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label-sm">Attendance (%)</label>
+              <input type="number" class="form-control glass-input" id="qAttendance" value="75" min="0" max="100">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Study Hours/day</label>
+              <input type="number" class="form-control glass-input" id="qStudyHours" value="4" min="0" max="16">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Previous Grades</label>
+              <input type="number" class="form-control glass-input" id="qGrades" value="70" min="0" max="100">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Assignment Score</label>
+              <input type="number" class="form-control glass-input" id="qAssignment" value="72" min="0" max="100">
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Family Support</label>
+              <select class="form-select glass-input" id="qFamily">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label-sm">Financial Issues</label>
+              <select class="form-select glass-input" id="qFinancial">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <p class="text-muted-soft small mb-2">Subject Scores (0-100)</p>
+            </div>
+            <div class="col-4"><input type="number" class="form-control glass-input" id="qMath" placeholder="Math" value="72" min="0" max="100"></div>
+            <div class="col-4"><input type="number" class="form-control glass-input" id="qSci" placeholder="Science" value="65" min="0" max="100"></div>
+            <div class="col-4"><input type="number" class="form-control glass-input" id="qEng" placeholder="English" value="80" min="0" max="100"></div>
+            <div class="col-6"><input type="number" class="form-control glass-input" id="qProg" placeholder="Programming" value="58" min="0" max="100"></div>
+            <div class="col-6"><input type="number" class="form-control glass-input" id="qHist" placeholder="History" value="74" min="0" max="100"></div>
+            <div class="col-12">
+              <button class="btn btn-primary-glow w-100" onclick="quickPredict()">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Predict Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div id="predictionResult" class="prediction-result-panel glass-card p-4" style="display:none">
+          <h4 class="mb-4"><i class="fa-solid fa-robot me-2"></i>AI Prediction Result</h4>
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="result-metric">
+                <div class="metric-label">Dropout Risk</div>
+                <div id="resDropout" class="metric-value"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="result-metric">
+                <div class="metric-label">Performance</div>
+                <div id="resPerformance" class="metric-value"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="result-metric">
+                <div class="metric-label">Strong Subject</div>
+                <div id="resStrong" class="metric-value text-success"></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="result-metric">
+                <div class="metric-label">Weak Subject</div>
+                <div id="resWeak" class="metric-value text-danger"></div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="result-metric">
+                <div class="metric-label">AI Confidence</div>
+                <div class="progress mt-2" style="height:10px">
+                  <div id="resConfidence" class="progress-bar bg-gradient-primary" style="width:0%"></div>
+                </div>
+                <small id="resConfidenceText" class="text-muted-soft"></small>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="result-metric study-plan-box">
+                <div class="metric-label mb-2"><i class="fa-solid fa-book me-1"></i>Study Plan</div>
+                <pre id="resStudyPlan" class="study-plan-text"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="predictionPlaceholder" class="prediction-placeholder glass-card p-5 text-center">
+          <div class="placeholder-icon">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <h4>Ready to Predict</h4>
+          <p class="text-muted-soft">Fill in the student details and click "Predict Now" to see the AI analysis.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function quickPredict() {
+  const btn = document.querySelector('.quick-form button');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Analyzing...';
+  btn.disabled = true;
+
+  const data = {
+    Attendance: +document.getElementById('qAttendance').value,
+    Study_Hours: +document.getElementById('qStudyHours').value,
+    Previous_Grades: +document.getElementById('qGrades').value,
+    Assignment_Score: +document.getElementById('qAssignment').value,
+    Family_Support: +document.getElementById('qFamily').value,
+    Internet_Access: 1,
+    Financial_Issues: +document.getElementById('qFinancial').value,
+    Subject_Math: +document.getElementById('qMath').value,
+    Subject_Science: +document.getElementById('qSci').value,
+    Subject_English: +document.getElementById('qEng').value,
+    Subject_Programming: +document.getElementById('qProg').value,
+    Subject_History: +document.getElementById('qHist').value,
+    Extra_Curricular: 0,
+    Health_Issues: 0
+  };
+
+  try {
+    const res = await fetch('/predict-single', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+
+    // Show result
+    document.getElementById('predictionPlaceholder').style.display = 'none';
+    document.getElementById('predictionResult').style.display = 'block';
+
+    const riskMap = {'High': 'danger', 'Medium': 'warning', 'Low': 'success'};
+    const perfMap = {'Good': 'success', 'Average': 'warning', 'Low': 'danger'};
+
+    document.getElementById('resDropout').innerHTML = `<span class="badge bg-${riskMap[result.dropout_risk]} fs-6">${result.dropout_risk} Risk</span>`;
+    document.getElementById('resPerformance').innerHTML = `<span class="badge bg-${perfMap[result.performance]} fs-6">${result.performance}</span>`;
+    document.getElementById('resStrong').textContent = result.strong_subject;
+    document.getElementById('resWeak').textContent = result.weak_subject;
+    document.getElementById('resConfidence').style.width = result.confidence + '%';
+    document.getElementById('resConfidenceText').textContent = result.confidence + '% confidence';
+    document.getElementById('resStudyPlan').textContent = result.study_plan;
+
+    document.getElementById('predictionResult').classList.add('animate-fade-up');
+  } catch(e) {
+    alert('Prediction failed. Ensure models are loaded (run train_model.py).');
+  }
+
+  btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-2"></i>Predict Now';
+  btn.disabled = false;
+}
+</script>
+{% endblock %}

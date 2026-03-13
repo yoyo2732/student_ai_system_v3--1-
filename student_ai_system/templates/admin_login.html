@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Admin Login - Student AI{% endblock %}
+{% block content %}
+<div class="login-page">
+  <div class="login-bg-animation">
+    <div class="orb orb-1"></div><div class="orb orb-2"></div>
+  </div>
+  <div class="login-container">
+    <div class="login-card glass-card">
+      <div class="login-header text-center mb-4">
+        <div class="login-logo"><i class="fa-solid fa-shield-halved"></i></div>
+        <h2 class="login-title">Admin Portal</h2>
+        <p class="text-muted-soft">Student AI Management System</p>
+      </div>
+
+      {% if blocked %}
+      <div class="alert alert-danger glass-alert text-center">
+        <i class="fa-solid fa-lock fa-2x mb-2 d-block"></i>
+        <strong>Account Temporarily Blocked</strong><br>
+        <small>3 failed attempts detected.</small>
+      </div>
+      {% else %}
+      {% if error %}<div class="alert alert-danger glass-alert"><i class="fa-solid fa-circle-xmark me-2"></i>{{ error }}
+        {% if attempts %}<div class="attempt-dots mt-2">{% for i in range(3) %}<span class="attempt-dot {{ 'filled' if i < attempts }}"></span>{% endfor %}</div>{% endif %}
+      </div>{% endif %}
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label-sm">Username</label>
+          <div class="input-group glass-input-group">
+            <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+            <input type="text" name="username" class="form-control glass-input" placeholder="admin / teacher / counselor" required autofocus value="{{ request.form.username or 'admin' }}">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-sm">Password</label>
+          <div class="input-group glass-input-group">
+            <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+            <input type="password" name="password" id="pwField" class="form-control glass-input" placeholder="Enter password" required>
+            <button type="button" class="btn glass-input border-0 px-3" onclick="document.getElementById('pwField').type=document.getElementById('pwField').type==='password'?'text':'password'"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+        {% if show_totp %}
+        <div class="mb-3">
+          <label class="form-label-sm">2FA Code</label>
+          <input type="hidden" name="username" value="{{ username }}">
+          <input type="text" name="totp_code" class="form-control glass-input text-center fs-4" placeholder="000000" maxlength="6" autofocus>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary-glow btn-lg w-100 mb-3">
+          <i class="fa-solid fa-right-to-bracket me-2"></i>Sign In
+        </button>
+      </form>
+
+      <!-- Role hint -->
+      <div class="role-hints">
+        <p class="tiny text-muted-soft text-center mb-2">Available accounts:</p>
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+          <span class="role-pill role-admin" onclick="fillCreds('admin','admin123')">admin / admin123 <small>(Super Admin)</small></span>
+          <span class="role-pill role-teacher" onclick="fillCreds('teacher','teacher123')">teacher / teacher123</span>
+          <span class="role-pill role-counselor" onclick="fillCreds('counselor','counsel123')">counselor / counsel123</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="text-center mt-4">
+        <a href="{{ url_for('index') }}" class="btn btn-ghost-sm"><i class="fa-solid fa-arrow-left me-1"></i>Back to Home</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function fillCreds(u, p) {
+  document.querySelector('[name=username]').value = u;
+  document.getElementById('pwField').value = p;
+}
+</script>
+{% endblock %}

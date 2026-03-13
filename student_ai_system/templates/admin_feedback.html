@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Teacher Feedback Review — Admin{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="container">
+    <h1 class="page-title"><i class="fa-solid fa-star me-3" style="color:#f39c12"></i>Teacher Feedback Review</h1>
+    <p class="page-subtitle">Aggregated student feedback by subject — {{ feedback_store|length }} total responses</p>
+  </div>
+</div>
+
+<div class="container py-4">
+
+  {% if not feedback_store %}
+  <div class="glass-card p-5 text-center">
+    <i class="fa-solid fa-comment-slash fa-3x mb-3 text-muted-soft d-block"></i>
+    <h5 class="text-muted-soft">No feedback submitted yet</h5>
+    <p class="text-muted-soft small">Students will be able to submit feedback from their portal.</p>
+  </div>
+  {% else %}
+
+  <!-- Summary Cards per Subject -->
+  <div class="row g-4 mb-4">
+    {% for subject, stats in avg_by_subject.items() %}
+    <div class="col-md-4">
+      <div class="glass-card p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <div class="fw-bold">{{ subject }}</div>
+            <div class="small text-muted-soft"><i class="fa-solid fa-chalkboard-user me-1"></i>{{ stats.teacher }}</div>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold fs-4" style="color:#f39c12">{{ stats.avg_rating }}</div>
+            <div class="tiny text-muted-soft">/ 5.0</div>
+          </div>
+        </div>
+        <!-- Star visual -->
+        <div class="mb-3">
+          {% set full = stats.avg_rating | int %}
+          {% for i in range(full) %}<i class="fa-solid fa-star text-warning"></i>{% endfor %}
+          {% if stats.avg_rating - full >= 0.5 %}<i class="fa-solid fa-star-half-stroke text-warning"></i>{% endif %}
+        </div>
+        <!-- Sub-metric bars -->
+        <div class="d-flex flex-column gap-2">
+          {% for label, val in [('Teaching Quality', stats.avg_teaching), ('Concept Clarity', stats.avg_clarity), ('Student Support', stats.avg_support)] %}
+          <div>
+            <div class="d-flex justify-content-between tiny text-muted-soft mb-1">
+              <span>{{ label }}</span><span>{{ val }}/5</span>
+            </div>
+            <div class="progress" style="height:6px">
+              <div class="progress-bar" style="width:{{ (val/5*100)|round }}%;background:{{ '#27ae60' if val>=4 else '#f39c12' if val>=3 else '#e74c3c' }}"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="mt-3 tiny text-muted-soft text-end">{{ stats.count }} response{{ 's' if stats.count != 1 }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- All Feedback Table -->
+  <div class="glass-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0"><i class="fa-solid fa-list me-2"></i>All Feedback Entries</h5>
+      <input type="text" class="form-control glass-input" id="fbSearch" placeholder="🔍 Search..." style="width:220px"
+             oninput="filterFB(this.value)">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-results" id="fbTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Student</th><th>Roll No</th><th>Subject</th><th>Teacher</th>
+            <th>Rating</th><th>Teaching</th><th>Clarity</th><th>Support</th><th>Comment</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fb in feedback_store %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="student-avatar" style="width:28px;height:28px;font-size:.7rem">{{ fb.student_name[0] }}</div>
+                <span class="small fw-semibold">{{ fb.student_name }}</span>
+              </div>
+            </td>
+            <td class="tiny text-muted-soft font-monospace">{{ fb.roll }}</td>
+            <td><span class="badge" style="background:rgba(108,92,231,0.2);color:var(--purple)">{{ fb.subject }}</span></td>
+            <td class="small">{{ fb.teacher }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                {% for i in range(fb.rating) %}<i class="fa-solid fa-star text-warning" style="font-size:.65rem"></i>{% endfor %}
+                <span class="small fw-bold ms-1">{{ fb.rating }}</span>
+              </div>
+            </td>
+            <td class="text-center"><span class="badge bg-{{ 'success' if fb.teaching_quality>=4 else 'warning' if fb.teaching_quality>=3 else 'danger' }}">{{ fb.teaching_quality }}</span></td>
+            <td class="text-center"><span class="badge bg-{{ 'success' if fb.clarity>=4 else 'warning' if fb.clarity>=3 else 'danger' }}">{{ fb.clarity }}</span></td>
+            <td class="text-center"><span class="badge bg-{{ 'success' if fb.support>=4 else 'warning' if fb.support>=3 else 'danger' }}">{{ fb.support }}</span></td>
+            <td class="small text-muted-soft" style="max-width:220px">
+              {% if fb.comment %}"{{ fb.comment[:80] }}{{ '…' if fb.comment|length > 80 }}"{% else %}<span class="tiny">—</span>{% endif %}
+            </td>
+            <td class="tiny text-muted-soft">{{ fb.timestamp }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterFB(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#fbTable tbody tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}
